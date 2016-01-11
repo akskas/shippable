@@ -14,3 +14,11 @@
 5. Assignment is hosted on: ec2-54-213-140-58.us-west-2.compute.amazonaws.com
 
 6. github repo link is: https://github.com/akskas/shippable
+
+
+Test Cases are:
+1. invalid repo
+2. no issues in repo
+3. all issues created before 1 week
+4. all issues created within 1 week
+5. issue are there in all catergories (ie within 24 hrs, between 1 day and 1 week, before 1 week)
