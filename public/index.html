@@ -1,0 +1,140 @@
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+        
+        <style>
+            .hidden{
+                display: none;
+            }
+            input {
+                width: 40%;
+                margin-left: 30%;
+                height: 40px;
+                border: 1px solid #333333;
+                border-radius: 3px;
+            }
+            button {
+                cursor: pointer;
+                width: 9%;
+                margin-top: 10px;
+                margin-left: 45%;
+                height: 40px;
+                border: 1px solid #333333;
+                border-radius: 3px;
+            }
+            h1 {
+                margin-left: 25%;
+            }
+            
+            table{
+                width: 70%;
+                margin-left: 15%;
+                border: 1px solid black;
+                border-collapse: collapse;
+            }
+            th {
+                padding: 15px;
+                border: 1px solid black;
+                border-collapse: collapse;
+            }
+            td {
+                padding: 15px 15px 15px 95px;
+                border: 1px solid black;
+                border-collapse: collapse;
+            }
+            
+            #error{
+                margin-left: 42%;
+                color: red;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="linkdiv" class="">
+            <h1>Please provide a link to any public GitHub repository</h1>
+            <form id="submitlink">
+                <input type="link" name="link" id="link" placeholder=" Enter link here"></br>
+                <button id="button" type="button">Get repo status</button>
+            </form>  </br>
+            <div id="error" class="hidden"></div>
+        </div>
+        
+        <div id="data" class="hidden">
+            <table>
+                <tr>
+                    <th>Total Open</th>
+                    <th>Opened Within 1 Day</th>
+                    <th>Opened b/w 1 day and 1 week</th>
+                    <th>Opened before 1 week</th>
+                </tr>
+                <tr>
+                    <td id="totalOpen"></td>
+                    <td id="oneDay"></td>
+                    <td id="oneWeek"></td>
+                    <td id="beforeWeek"></td>
+                </tr>
+            </table>
+            </br>
+        </div>
+
+        <script>
+            $("button").click(function( event ) {
+                // hide error
+                $('#error').addClass('hidden');
+                
+                // validate link    
+                var link = $('#link').val();
+                var regex = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test( link );
+
+                if(regex){
+                    // check whether its a github link
+                    var arr = link.split('//');
+                    arr = arr[1].split('.com');
+                    if(arr[0] == "github"){
+                        // if github link, change cursor to progress to let user know that the request is being processed
+                        $("body").css("cursor", "progress");
+                        
+                        // make post ajax call with link as data
+                        $.ajax({
+                            method: "POST",
+                            url: "/getcount",
+                            dataType:"json",
+                            data: {
+                                link: link
+                            }
+                        })
+                        .done(function(msg) {
+                            console.log( "Data received: " , msg);
+                            
+                            // success show the table with corresponding data
+                            if(msg.message == "success"){
+                                $('#data').removeClass('hidden');
+                                $("#totalOpen").text(msg.totalCount);
+                                $("#oneDay").text(msg.dayCount);
+                                $("#oneWeek").text(msg.weekCount);
+                                $("#beforeWeek").text(msg.beforeWeekCount);
+                                
+                                // change cursor to default
+                                $("body").css("cursor", "default");
+                                
+                                // empty link input field
+                                $('#link').val("");
+                            }
+                        });
+                    }else{
+                        // if not a github link show error
+                        $('#error').removeClass('hidden');
+                        var errMessage = "Error: This is not a github link";
+                        $('#error').text(errMessage);
+                    }
+                }else{
+                    // if not a link show error
+                    $('#error').removeClass('hidden');
+                    var errMessage = "Error: This is not a valid link";
+                    $('#error').text(errMessage);
+                }
+                event.preventDefault();
+            });
+        </script>
+    </body>
+</html>
