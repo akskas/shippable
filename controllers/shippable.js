@@ -32,7 +32,7 @@ var getcount = function(req, res){
     
     // username and password for authentication
     var username = "akskas",
-    password = "eat2live333";
+    password = "akskas333";
     
     // json object to store required data for github api call 
     // call is mage per_page parameter which means api will return maximum 100 issues per call
