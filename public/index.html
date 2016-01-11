@@ -119,6 +119,11 @@
                                 
                                 // empty link input field
                                 $('#link').val("");
+                            }else{
+                                // if not a github link show error
+                                $('#error').removeClass('hidden');
+                                var errMessage = "Error: error in query, status code: " + msg.message + " invalid repository";
+                                $('#error').text(errMessage);
                             }
                         });
                     }else{

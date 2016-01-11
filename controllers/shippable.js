@@ -23,12 +23,12 @@ var getcount = function(req, res){
         oneWeek = now - 1000*60*60*24*7;
     
     var opened = [],     // array to store created_at times of issues
-        count = 1,
+        totalCount = 0,
         goNext = false,
         date,
         linkHeader,
         dayCount = 0,
-        weekCount = 0;
+        getOneWeek = true;
     
     // username and password for authentication
     var username = "akskas",
@@ -37,8 +37,10 @@ var getcount = function(req, res){
     // json object to store required data for github api call 
     // call is mage per_page parameter which means api will return maximum 100 issues per call
     // state of issues is given as open, to get only open issues
+    
+    https://api.github.com/search/issues?q=repo:octocat/Hello-World+is:issue+is:open&&per_page=100&&page=1
     var options = {
-        url: "https://" + username + ":" + password + '@api.github.com/repos/'+ link[1] +'/' + link[2] + '/issues?state=open&per_page=100&page=1',
+        url: "https://" + username + ":" + password + '@api.github.com/search/issues?q=repo:'+ link[1] +'/' + link[2] + '+is:issue+is:open&&per_page=100&&page=1',
         headers: {
             'User-Agent': 'request',
         },
@@ -57,19 +59,30 @@ var getcount = function(req, res){
     // callback function, called after api request
     function callback(error, response, body) {
         // check for error and statusCode for api call 
+        console.log("error: " + error + " statusCode: " + response.statusCode);
         if (!error && response.statusCode == 200) {
-            
-            // parse body data
-            var info = JSON.parse(body);
-            
+            body = JSON.parse(body);
+            // get total count
+            if(totalCount == 0){
+                totalCount = body.total_count;
+                console.log("total count: ", totalCount);
+            }
+            // get items from body
+            var info = body.items;
             // save in array, change date to total milliseconds (ie., starting from 1970)
             for(var i=0; i < info.length; i++){
                 date = new Date(info[i].created_at);
-                opened.push(date.getTime());
+                if(date.getTime() >= oneWeek){
+                    opened.push(date.getTime());
+                }else{
+                    getOneWeek = false;
+                    i = info.length;
+                }
             }
             
             // get link header data and parse 
             linkHeader = parselink(response.headers.link); 
+            console.log("linkHeader: ", linkHeader);
             goNext = false;
             
             // check for next link
@@ -81,7 +94,7 @@ var getcount = function(req, res){
             }
             
             // if next link present, change url to next url and make the github api call again
-            if(goNext){    
+            if(goNext && getOneWeek){    
                 options.url = linkHeader.next.url;
                 request(options, callback);
             }
@@ -91,27 +104,33 @@ var getcount = function(req, res){
                 for(var i = 0; i < opened.length; i++){
                     if(opened[i] >= oneDay){
                         dayCount++;
-                    }else if(opened[i] < oneDay && opened[i] >= oneWeek){
-                        weekCount++;
                     }else{
-                        resp.totalCount= opened.length;
+                        resp.totalCount= totalCount;
                         resp.dayCount= dayCount;
-                        resp.weekCount= weekCount;
-                        resp.beforeWeekCount= opened.length - weekCount - dayCount;
+                        resp.weekCount= opened.length - dayCount;
+                        resp.beforeWeekCount= totalCount - opened.length;
                         
                         // stop the loop if all the issues within 1 week are known, as we already know the total count
                         i = opened.length;
                     }
+                }
+                
+                // in case all issues were opened before 1 week,
+                // opened array will be empty, so change response values
+                if(opened.length == 0){
+                    resp.totalCount= totalCount;
+                    resp.beforeWeekCount= totalCount;
                 }
                 console.log("resp: ", resp);
                 
                 //send response
                 res.send(JSON.stringify(resp));
             }
-        }else
-            resp.message = error;
+        }else{
+            resp.message = response.statusCode;
             console.log("error: ", error);
-//            res.send(JSON.stringify(resp));
+            res.send(JSON.stringify(resp)); 
+        }
     }
     
     // first call to github api
