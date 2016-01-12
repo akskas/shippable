@@ -31,14 +31,14 @@ var getcount = function(req, res){
         getOneWeek = true;
     
     // username and password for authentication
-    var username = "akskas",
-    password = "akskas333";
+    var username = "someuser",
+    password = "somepassword";
     
     // json object to store required data for github api call 
     // call is mage per_page parameter which means api will return maximum 100 issues per call
     // state of issues is given as open, to get only open issues
     
-    https://api.github.com/search/issues?q=repo:octocat/Hello-World+is:issue+is:open&&per_page=100&&page=1
+    // https://api.github.com/search/issues?q=repo:octocat/Hello-World+is:issue+is:open&&per_page=100&&page=1
     var options = {
         url: "https://" + username + ":" + password + '@api.github.com/search/issues?q=repo:'+ link[1] +'/' + link[2] + '+is:issue+is:open&&per_page=100&&page=1',
         headers: {
